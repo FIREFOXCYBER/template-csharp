@@ -8,7 +8,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Mycroft.App.Message;
-using System.Web.Script.Serialization; //This can be used with dynamic, unlike the contract
+using System.Web.Script.Serialization;
+using System.Diagnostics; //This can be used with dynamic, unlike the contract
 
 namespace Mycroft.App
 {
@@ -17,17 +18,14 @@ namespace Mycroft.App
         private string manifest;
         private TcpClient cli;
         private Stream stream;
-        private StreamWriter writer;
-        private Encoding enc = new UTF8Encoding(true, true);
         private JavaScriptSerializer ser = new JavaScriptSerializer();
         private StreamReader reader;
-
         public string InstanceId;
 
         public Server()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var textStreamReader = new StreamReader("app.json");
+            var textStreamReader = new StreamReader("app.json"));
             manifest = textStreamReader.ReadToEnd();
             var jsobj = ser.Deserialize<dynamic>(manifest);
             InstanceId = jsobj["instanceId"];
@@ -36,15 +34,9 @@ namespace Mycroft.App
         public async void Connect(string hostname, string port)
         {
             cli = new TcpClient(hostname, Convert.ToInt32(port));
-            SetStream(cli.GetStream());
+            stream = cli.GetStream();
+            reader = new StreamReader(stream);
             await StartListening();
-        }
-
-        public void SetStream(Stream s)
-        {
-            stream = s;
-            writer = new StreamWriter(s, enc);
-            reader = new StreamReader(s, enc);
         }
 
         private void Response(MessageType type, dynamic jsonobj)
@@ -61,7 +53,7 @@ namespace Mycroft.App
         private void Response(string badtype, dynamic jsonobj)
         {
             //This probably doesn't need to throw an error... a log might be sufficient.
-            throw new ArgumentException("Invalid message type " + badtype + " recieved!");
+            throw new ArgumentException("Invalid message type "+badtype+" recieved!");
         }
 
         public async Task StartListening()
@@ -75,61 +67,61 @@ namespace Mycroft.App
 
                 switch (type)
                 {
-                    case "APP_MANIFEST":
-                        {
-                            Response(new APP_MANIFEST(), message);
-                            break;
-                        }
-                    case "APP_MANIFEST_OK":
-                        {
-                            Response(new APP_MANIFEST_OK(), message);
-                            break;
-                        }
-                    case "APP_MANIFEST_FAIL":
-                        {
-                            Response(new APP_MANIFEST_FAIL(), message);
-                            break;
-                        }
-                    case "APP_DEPENDENCY":
-                        {
-                            Response(new APP_DEPENDENCY(), message);
-                            break;
-                        }
-                    case "MSG_QUERY":
-                        {
-                            Response(new MSG_QUERY(), message);
-                            break;
-                        }
-                    case "MSG_QUERY_SUCCESS":
-                        {
-                            Response(new MSG_QUERY_SUCCESS(), message);
-                            break;
-                        }
-                    case "MSG_QUERY_FAIL":
-                        {
-                            Response(new MSG_QUERY_FAIL(), message);
-                            break;
-                        }
-                    case "MSG_BROADCAST":
-                        {
-                            Response(new MSG_BROADCAST(), message);
-                            break;
-                        }
-                    case "MSG_BROADCAST_SUCCESS":
-                        {
-                            Response(new MSG_BROADCAST_SUCCESS(), message);
-                            break;
-                        }
-                    case "MSG_BROADCAST_FAIL":
-                        {
-                            Response(new MSG_BROADCAST_FAIL(), message);
-                            break;
-                        }
-                    default:
-                        {
-                            Response(type, message);
-                            break;
-                        }
+                case "APP_MANIFEST": 
+                    {
+                        Response(new APP_MANIFEST(), message);
+                        break;
+                    }
+                case "APP_MANIFEST_OK": 
+                    {
+                        Response(new APP_MANIFEST_OK(), message);
+                        break;
+                    }
+                case "APP_MANIFEST_FAIL": 
+                    {
+                        Response(new APP_MANIFEST_FAIL(), message);
+                        break;
+                    }
+                case "APP_DEPENDENCY":
+                    {
+                        Response(new APP_DEPENDENCY(), message);
+                        break;
+                    }
+                case "MSG_QUERY":
+                    {
+                        Response(new MSG_QUERY(), message);
+                        break;
+                    }
+                case "MSG_QUERY_SUCCESS":
+                    {
+                        Response(new MSG_QUERY_SUCCESS(), message);
+                        break;
+                    }
+                case "MSG_QUERY_FAIL":
+                    {
+                        Response(new MSG_QUERY_FAIL(), message);
+                        break;
+                    }
+                case "MSG_BROADCAST":
+                    {
+                        Response(new MSG_BROADCAST(), message);
+                        break;
+                    }
+                case "MSG_BROADCAST_SUCCESS":
+                    {
+                        Response(new MSG_BROADCAST_SUCCESS(), message);
+                        break;
+                    }
+                case "MSG_BROADCAST_FAIL":
+                    {
+                        Response(new MSG_BROADCAST_FAIL(), message);
+                        break;
+                    }
+                default:
+                    {
+                        Response(type, message);
+                        break;
+                    }
                 }
             }
         }
@@ -140,23 +132,22 @@ namespace Mycroft.App
             await SendData("APP_DOWN", "");
             cli.Close();
         }
-
+        
         public async Task SendData(string type, string data)
         {
             string msg = type + " " + data;
-            msg.Trim();
-            string composition = enc.GetBytes(msg).Length.ToString() + "\n" + msg;
-            await writer.WriteLineAsync(composition);
-            writer.Flush();
+            msg = msg.Trim();
+            msg = Encoding.UTF8.GetByteCount(msg) + "\n" + msg;
+            stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int) msg.Length);
         }
 
         public async Task SendJson(string type, Object o)
-        {
+        {            
             string obj = ser.Serialize(o);
             string msg = type + " " + obj;
             msg = msg.Trim();
-            await writer.WriteLineAsync(enc.GetBytes(msg).Length.ToString() + "\n" + msg);
-            writer.Flush();
+            msg = Encoding.UTF8.GetByteCount(msg) + "\n" + msg;
+            stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int) msg.Length);
         }
 
         public async Task SendManifest()
