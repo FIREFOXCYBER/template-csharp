@@ -25,7 +25,7 @@ namespace Mycroft.App
         public Client()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var textStreamReader = new StreamReader("app.json"));
+            var textStreamReader = new StreamReader("app.json");
             manifest = textStreamReader.ReadToEnd();
             var jsobj = ser.Deserialize<dynamic>(manifest);
             InstanceId = jsobj["instanceId"];
