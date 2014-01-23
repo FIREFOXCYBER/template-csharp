@@ -13,7 +13,7 @@ using System.Diagnostics; //This can be used with dynamic, unlike the contract
 
 namespace Mycroft.App
 {
-    public abstract class Server
+    public abstract class Client
     {
         private string manifest;
         private TcpClient cli;
@@ -22,7 +22,7 @@ namespace Mycroft.App
         private StreamReader reader;
         public string InstanceId;
 
-        public Server()
+        public Client()
         {
             var assembly = Assembly.GetExecutingAssembly();
             var textStreamReader = new StreamReader("app.json"));
