@@ -19,6 +19,8 @@ namespace Mycroft.App
 
         public void On(string msgType, MsgHandler del)
         {
+            if (!events.ContainsKey(msgType))
+                events.Add(msgType, null);
             events[msgType] = (MsgHandler)events[msgType] + del;
         }
 
