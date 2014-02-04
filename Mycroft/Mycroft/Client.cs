@@ -20,6 +20,7 @@ namespace Mycroft.App
         private Stream stream;
         private JavaScriptSerializer ser = new JavaScriptSerializer();
         private StreamReader reader;
+        private MessageEventHandler handler;
         public string InstanceId;
 
         public Client()
@@ -29,6 +30,7 @@ namespace Mycroft.App
             manifest = textStreamReader.ReadToEnd();
             var jsobj = ser.Deserialize<dynamic>(manifest);
             InstanceId = jsobj["instanceId"];
+            handler = new MessageEventHandler();
 
         }
         public async void Connect(string hostname, string port)
@@ -39,23 +41,6 @@ namespace Mycroft.App
             await StartListening();
         }
 
-        private void Response(MessageType type, dynamic jsonobj)
-        {
-            return;
-        }
-
-        protected abstract void Response(APP_MANIFEST_OK type, dynamic message);
-        protected abstract void Response(APP_DEPENDENCY type, dynamic message);
-        protected abstract void Response(MSG_QUERY type, dynamic message);
-        protected abstract void Response(MSG_BROADCAST type, dynamic message);
-
-
-        private void Response(string badtype, dynamic jsonobj)
-        {
-            //This probably doesn't need to throw an error... a log might be sufficient.
-            throw new ArgumentException("Invalid message type "+badtype+" recieved!");
-        }
-
         public async Task StartListening()
         {
             await SendManifest();
@@ -64,65 +49,7 @@ namespace Mycroft.App
                 dynamic obj = await ReadJson();
                 string type = obj.type;
                 dynamic message = obj.message;
-
-                switch (type)
-                {
-                case "APP_MANIFEST": 
-                    {
-                        Response(new APP_MANIFEST(), message);
-                        break;
-                    }
-                case "APP_MANIFEST_OK": 
-                    {
-                        Response(new APP_MANIFEST_OK(), message);
-                        break;
-                    }
-                case "APP_MANIFEST_FAIL": 
-                    {
-                        Response(new APP_MANIFEST_FAIL(), message);
-                        break;
-                    }
-                case "APP_DEPENDENCY":
-                    {
-                        Response(new APP_DEPENDENCY(), message);
-                        break;
-                    }
-                case "MSG_QUERY":
-                    {
-                        Response(new MSG_QUERY(), message);
-                        break;
-                    }
-                case "MSG_QUERY_SUCCESS":
-                    {
-                        Response(new MSG_QUERY_SUCCESS(), message);
-                        break;
-                    }
-                case "MSG_QUERY_FAIL":
-                    {
-                        Response(new MSG_QUERY_FAIL(), message);
-                        break;
-                    }
-                case "MSG_BROADCAST":
-                    {
-                        Response(new MSG_BROADCAST(), message);
-                        break;
-                    }
-                case "MSG_BROADCAST_SUCCESS":
-                    {
-                        Response(new MSG_BROADCAST_SUCCESS(), message);
-                        break;
-                    }
-                case "MSG_BROADCAST_FAIL":
-                    {
-                        Response(new MSG_BROADCAST_FAIL(), message);
-                        break;
-                    }
-                default:
-                    {
-                        Response(type, message);
-                        break;
-                    }
-                }
+                handler.Handle(type, message);
             }
         }
 
