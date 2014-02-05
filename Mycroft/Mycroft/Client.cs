@@ -19,7 +19,7 @@ namespace Mycroft.App
         private Stream stream;
         private JavaScriptSerializer ser = new JavaScriptSerializer();
         private StreamReader reader;
-        private MessageEventHandler handler;
+        protected MessageEventHandler handler;
         public string InstanceId;
 
         public Client()
@@ -35,9 +35,17 @@ namespace Mycroft.App
         public async void Connect(string hostname, string port)
         {
             cli = new TcpClient(hostname, Convert.ToInt32(port));
+            Logger.GetInstance().Info("Connected to Mycroft");
             stream = cli.GetStream();
             reader = new StreamReader(stream);
-            await StartListening();
+            try
+            {
+                await StartListening();
+            }
+            finally
+            {
+                CloseConnection();
+            }
         }
 
         public async Task StartListening()
@@ -56,17 +64,20 @@ namespace Mycroft.App
 
         public async void CloseConnection()
         {
-            await SendData("APP_DOWN", "");
             handler.Handle("END");
+            await SendData("APP_DOWN", "");
+            Logger.GetInstance().Info("Disconnected from Mycroft");
             cli.Close();
         }
 
-        #region Message Sending
+        #region Message Sending and Recieving
         public async Task SendData(string type, string data)
         {
             string msg = type + " " + data;
             msg = msg.Trim();
             msg = Encoding.UTF8.GetByteCount(msg) + "\n" + msg;
+            Logger.GetInstance().Info("Sending Message " + type);
+            Logger.GetInstance().Debug(msg);
             stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int) msg.Length);
         }
 
@@ -102,6 +113,8 @@ namespace Mycroft.App
 
             //Convert the json string to an object
             var jsonstr = str.TrimStart(match.Value.ToCharArray());
+            Logger.GetInstance().Info("Recieved Message " + match.Value);
+            Logger.GetInstance().Debug(jsonstr);
             if (jsonstr.Trim().Length == 0)
             {
                 return new
