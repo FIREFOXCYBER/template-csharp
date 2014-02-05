@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Mycroft.App.Message;
 using System.Web.Script.Serialization;
 using System.Diagnostics; //This can be used with dynamic, unlike the contract
 
@@ -44,6 +43,7 @@ namespace Mycroft.App
         public async Task StartListening()
         {
             await SendManifest();
+            handler.Handle("CONNECT");
             while (true)
             {
                 dynamic obj = await ReadJson();
@@ -57,9 +57,11 @@ namespace Mycroft.App
         public async void CloseConnection()
         {
             await SendData("APP_DOWN", "");
+            handler.Handle("END");
             cli.Close();
         }
-        
+
+        #region Message Sending
         public async Task SendData(string type, string data)
         {
             string msg = type + " " + data;
@@ -75,11 +77,6 @@ namespace Mycroft.App
             msg = msg.Trim();
             msg = Encoding.UTF8.GetByteCount(msg) + "\n" + msg;
             stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int) msg.Length);
-        }
-
-        public async Task SendManifest()
-        {
-            await SendData("APP_MANIFEST", manifest);
         }
 
         public async Task<Object> ReadJson()
@@ -122,6 +119,73 @@ namespace Mycroft.App
                 message = obj
             };
         }
+        #endregion
+        #region Message Helpers
+        public async Task SendManifest()
+        {
+            SendData("APP_MANIFEST", manifest);
+        }
 
+        public async Task Up()
+        {
+            SendData("APP_UP", "");
+        }
+
+        public async Task Down()
+        {
+            SendData("APP_DOWN", "");
+        }
+
+        public async Task InUse(int priority)
+        {
+            SendJson("APP_IN_USE", new { priority = priority });
+        }
+
+        public async Task Broadcast(dynamic content)
+        {
+            var broadcast = new
+            {
+                id = Guid.NewGuid(),
+                content = content
+            };
+            SendJson("MSG_BROADCAST", broadcast);
+        }
+
+        public async Task Query(string capability, string action, dynamic data, string[] instanceId = null , int priority = 30)
+        {
+            if (instanceId == null)
+                instanceId = new string[0];
+            var query = new
+            {
+                id = Guid.NewGuid(),
+                capability = capability,
+                action = action,
+                data = data,
+                instanceId = instanceId,
+                priority = priority
+            };
+            SendJson("MSG_QUERY", query);
+        }
+
+        public async Task QuerySuccess(string id, dynamic ret)
+        {
+            var querySuccess = new
+            {
+                id = id,
+                ret = ret
+            };
+            SendJson("MSG_QUERY_SUCCESS", querySuccess);
+        }
+
+        public async Task QueryFail(string id, string message)
+        {
+            var queryFail = new
+            {
+                id = id,
+                message = message
+            };
+            SendJson("MSG_QUERRY_FAIL", queryFail);
+        }
+        #endregion
     }
 }
