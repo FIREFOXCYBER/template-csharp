@@ -121,6 +121,8 @@ namespace Mycroft.App
             string msg = type + " " + obj;
             msg = msg.Trim();
             msg = Encoding.UTF8.GetByteCount(msg) + "\n" + msg;
+            Logger.GetInstance().Info("Sending Message " + type);
+            Logger.GetInstance().Debug(msg);
             stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int)msg.Length);
         }
 
