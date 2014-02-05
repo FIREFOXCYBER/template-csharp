@@ -29,10 +29,9 @@ namespace Mycroft.App
         /// <summary>
         /// Constructor for a client
         /// </summary>
-        public Client()
+        public Client(string manifestPath)
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            var textStreamReader = new StreamReader("app.json");
+            var textStreamReader = new StreamReader(manifestPath);
             manifest = textStreamReader.ReadToEnd();
             var jsobj = ser.Deserialize<dynamic>(manifest);
             InstanceId = jsobj["instanceId"];
@@ -86,7 +85,7 @@ namespace Mycroft.App
         public async void CloseConnection()
         {
             handler.Handle("END");
-            await SendData("APP_DOWN", "");
+            await SendData("APP_DOWN");
             Logger.GetInstance().Info("Disconnected from Mycroft");
             cli.Close();
         }
@@ -94,19 +93,19 @@ namespace Mycroft.App
         #region Message Sending and Recieving
         /// <summary>
         /// Send a message to Mycroft where data is a string. Used for sending
-        /// Messages with no body
+        /// Messages with no body (and app manifest because it's already a string)
         /// </summary>
         /// <param name="type">The type of message being sent</param>
         /// <param name="data">The message string that you are sending</param>
         /// <returns>A task</returns>
-        public async Task SendData(string type, string data = "")
+        private async Task SendData(string type, string data = "")
         {
             string msg = type + " " + data;
             msg = msg.Trim();
             msg = Encoding.UTF8.GetByteCount(msg) + "\n" + msg;
             Logger.GetInstance().Info("Sending Message " + type);
             Logger.GetInstance().Debug(msg);
-            stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int) msg.Length);
+            stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int)msg.Length);
         }
 
         /// <summary>
@@ -116,20 +115,20 @@ namespace Mycroft.App
         /// <param name="type">The type of message being sent</param>
         /// <param name="data">The json object being sent</param>
         /// <returns>A task</returns>
-        public async Task SendJson(string type, Object data)
-        {            
+        private async Task SendJson(string type, Object data)
+        {
             string obj = ser.Serialize(data);
             string msg = type + " " + obj;
             msg = msg.Trim();
             msg = Encoding.UTF8.GetByteCount(msg) + "\n" + msg;
-            stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int) msg.Length);
+            stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int)msg.Length);
         }
 
         /// <summary>
         /// Reads in json from the Mycroft server.
         /// </summary>
         /// <returns>An object with the type and message recieved</returns>
-        public async Task<Object> ReadJson()
+        private async Task<Object> ReadJson()
         {
             //Size of message in bytes
             string len = reader.ReadLine();
@@ -234,7 +233,7 @@ namespace Mycroft.App
         /// <param name="instanceId">An array of instance ids. Defaults to null</param>
         /// <param name="priority">the priority. Defaults to 30</param>
         /// <returns>A task</returns>
-        public async Task Query(string capability, string action, dynamic data, string[] instanceId = null , int priority = 30)
+        public async Task Query(string capability, string action, dynamic data, string[] instanceId = null, int priority = 30)
         {
             if (instanceId == null)
                 instanceId = new string[0];
