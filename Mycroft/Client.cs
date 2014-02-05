@@ -12,6 +12,10 @@ using System.Diagnostics;
 
 namespace Mycroft.App
 {
+    /// <summary>
+    /// The client abstract class. Any application made will inherit from
+    /// this class.
+    /// </summary>
     public abstract class Client
     {
         private string manifest;
@@ -229,7 +233,7 @@ namespace Mycroft.App
         /// <param name="data">The data of the message</param>
         /// <param name="instanceId">An array of instance ids. Defaults to null</param>
         /// <param name="priority">the priority. Defaults to 30</param>
-        /// <returns></returns>
+        /// <returns>A task</returns>
         public async Task Query(string capability, string action, dynamic data, string[] instanceId = null , int priority = 30)
         {
             if (instanceId == null)
@@ -251,7 +255,7 @@ namespace Mycroft.App
         /// </summary>
         /// <param name="id">The id of the message being responded to</param>
         /// <param name="ret">The content of the message</param>
-        /// <returns></returns>
+        /// <returns>A task</returns>
         public async Task QuerySuccess(string id, dynamic ret)
         {
             var querySuccess = new
@@ -267,7 +271,7 @@ namespace Mycroft.App
         /// </summary>
         /// <param name="id">The id of the message being responded to</param>
         /// <param name="message">The error message</param>
-        /// <returns></returns>
+        /// <returns>A task</returns>
         public async Task QueryFail(string id, string message)
         {
             var queryFail = new
