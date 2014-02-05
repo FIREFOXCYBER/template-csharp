@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
-using System.Diagnostics; //This can be used with dynamic, unlike the contract
+using System.Diagnostics;
 
 namespace Mycroft.App
 {
@@ -22,6 +22,9 @@ namespace Mycroft.App
         protected MessageEventHandler handler;
         public string InstanceId;
 
+        /// <summary>
+        /// Constructor for a client
+        /// </summary>
         public Client()
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -32,6 +35,13 @@ namespace Mycroft.App
             handler = new MessageEventHandler();
 
         }
+
+        #region Mycroft Connection
+        /// <summary>
+        /// Connects to Mycroft
+        /// </summary>
+        /// <param name="hostname">The hostname to connect to</param>
+        /// <param name="port">The port to connect to</param>
         public async void Connect(string hostname, string port)
         {
             cli = new TcpClient(hostname, Convert.ToInt32(port));
@@ -48,6 +58,10 @@ namespace Mycroft.App
             }
         }
 
+        /// <summary>
+        /// Start recieving messages from Mycroft
+        /// </summary>
+        /// <returns>An Awaitable Task</returns>
         public async Task StartListening()
         {
             await SendManifest();
@@ -62,6 +76,9 @@ namespace Mycroft.App
         }
 
 
+        /// <summary>
+        /// Close the connection from the Mycroft server
+        /// </summary>
         public async void CloseConnection()
         {
             handler.Handle("END");
@@ -69,9 +86,16 @@ namespace Mycroft.App
             Logger.GetInstance().Info("Disconnected from Mycroft");
             cli.Close();
         }
-
+        #endregion
         #region Message Sending and Recieving
-        public async Task SendData(string type, string data)
+        /// <summary>
+        /// Send a message to Mycroft where data is a string. Used for sending
+        /// Messages with no body
+        /// </summary>
+        /// <param name="type">The type of message being sent</param>
+        /// <param name="data">The message string that you are sending</param>
+        /// <returns>A task</returns>
+        public async Task SendData(string type, string data = "")
         {
             string msg = type + " " + data;
             msg = msg.Trim();
@@ -81,15 +105,26 @@ namespace Mycroft.App
             stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int) msg.Length);
         }
 
-        public async Task SendJson(string type, Object o)
+        /// <summary>
+        /// Sends a message to Mycroft where data is an object. Used for sending messages
+        /// that actually have a body
+        /// </summary>
+        /// <param name="type">The type of message being sent</param>
+        /// <param name="data">The json object being sent</param>
+        /// <returns>A task</returns>
+        public async Task SendJson(string type, Object data)
         {            
-            string obj = ser.Serialize(o);
+            string obj = ser.Serialize(data);
             string msg = type + " " + obj;
             msg = msg.Trim();
             msg = Encoding.UTF8.GetByteCount(msg) + "\n" + msg;
             stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int) msg.Length);
         }
 
+        /// <summary>
+        /// Reads in json from the Mycroft server.
+        /// </summary>
+        /// <returns>An object with the type and message recieved</returns>
         public async Task<Object> ReadJson()
         {
             //Size of message in bytes
@@ -134,26 +169,48 @@ namespace Mycroft.App
         }
         #endregion
         #region Message Helpers
+        /// <summary>
+        /// Sends APP_MANIFEST to Mycroft
+        /// </summary>
+        /// <returns>A task</returns>
         public async Task SendManifest()
         {
             SendData("APP_MANIFEST", manifest);
         }
 
+        /// <summary>
+        /// Sends APP_UP to Mycroft
+        /// </summary>
+        /// <returns>A task</returns>
         public async Task Up()
         {
-            SendData("APP_UP", "");
+            SendData("APP_UP");
         }
 
+        /// <summary>
+        /// Sends APP_DOWN to Mycroft
+        /// </summary>
+        /// <returns>A task</returns>
         public async Task Down()
         {
-            SendData("APP_DOWN", "");
+            SendData("APP_DOWN");
         }
 
+        /// <summary>
+        /// Sends APP_IN_USE to Mycroft
+        /// </summary>
+        /// <param name="priority">the priority of the app</param>
+        /// <returns>A task</returns>
         public async Task InUse(int priority)
         {
             SendJson("APP_IN_USE", new { priority = priority });
         }
 
+        /// <summary>
+        /// Sends MSG_BROADCAST to Mycroft
+        /// </summary>
+        /// <param name="content">The content object of the message</param>
+        /// <returns>A task</returns>
         public async Task Broadcast(dynamic content)
         {
             var broadcast = new
@@ -164,6 +221,15 @@ namespace Mycroft.App
             SendJson("MSG_BROADCAST", broadcast);
         }
 
+        /// <summary>
+        /// Sends MSG_QUERY to Mycroft
+        /// </summary>
+        /// <param name="capability">The capability</param>
+        /// <param name="action">The action</param>
+        /// <param name="data">The data of the message</param>
+        /// <param name="instanceId">An array of instance ids. Defaults to null</param>
+        /// <param name="priority">the priority. Defaults to 30</param>
+        /// <returns></returns>
         public async Task Query(string capability, string action, dynamic data, string[] instanceId = null , int priority = 30)
         {
             if (instanceId == null)
@@ -180,6 +246,12 @@ namespace Mycroft.App
             SendJson("MSG_QUERY", query);
         }
 
+        /// <summary>
+        /// Sends MSG_QUERY_SUCCESS to Mycroft
+        /// </summary>
+        /// <param name="id">The id of the message being responded to</param>
+        /// <param name="ret">The content of the message</param>
+        /// <returns></returns>
         public async Task QuerySuccess(string id, dynamic ret)
         {
             var querySuccess = new
@@ -190,6 +262,12 @@ namespace Mycroft.App
             SendJson("MSG_QUERY_SUCCESS", querySuccess);
         }
 
+        /// <summary>
+        /// Sends MSG_QUERY_FAIL to Mycroft
+        /// </summary>
+        /// <param name="id">The id of the message being responded to</param>
+        /// <param name="message">The error message</param>
+        /// <returns></returns>
         public async Task QueryFail(string id, string message)
         {
             var queryFail = new
