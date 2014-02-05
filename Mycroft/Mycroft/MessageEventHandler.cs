@@ -26,6 +26,8 @@ namespace Mycroft.App
 
         public void On(string msgType, ConnectDisconnect del)
         {
+            if (!events.ContainsKey(msgType))
+                events.Add(msgType, null);
             events[msgType] = (ConnectDisconnect)events[msgType] + del;
         }
 
@@ -46,7 +48,7 @@ namespace Mycroft.App
             }
             else
             {
-                Console.WriteLine("Not handling Message: " + msgType);
+                Logger.GetInstance().Warning("Not handling Message: " + msgType);
             }
         }
     }
