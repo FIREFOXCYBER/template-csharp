@@ -48,7 +48,6 @@ namespace Mycroft.App
         public async void Connect(string hostname, string port)
         {
             cli = new TcpClient(hostname, Convert.ToInt32(port));
-            Logger.GetInstance().Info("Connected to Mycroft");
             stream = cli.GetStream();
             reader = new StreamReader(stream);
             try
@@ -86,7 +85,6 @@ namespace Mycroft.App
         {
             handler.Handle("END");
             await SendData("APP_DOWN");
-            Logger.GetInstance().Info("Disconnected from Mycroft");
             cli.Close();
         }
         #endregion
@@ -103,8 +101,6 @@ namespace Mycroft.App
             string msg = type + " " + data;
             msg = msg.Trim();
             msg = Encoding.UTF8.GetByteCount(msg) + "\n" + msg;
-            Logger.GetInstance().Info("Sending Message " + type);
-            Logger.GetInstance().Debug(msg);
             stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int)msg.Length);
         }
 
@@ -121,8 +117,6 @@ namespace Mycroft.App
             string msg = type + " " + obj;
             msg = msg.Trim();
             msg = Encoding.UTF8.GetByteCount(msg) + "\n" + msg;
-            Logger.GetInstance().Info("Sending Message " + type);
-            Logger.GetInstance().Debug(msg);
             stream.Write(Encoding.UTF8.GetBytes(msg), 0, (int)msg.Length);
         }
 
@@ -153,8 +147,6 @@ namespace Mycroft.App
 
             //Convert the json string to an object
             var jsonstr = str.TrimStart(match.Value.ToCharArray());
-            Logger.GetInstance().Info("Got Message " + match.Value);
-            Logger.GetInstance().Debug(jsonstr);
             if (jsonstr.Trim().Length == 0)
             {
                 return new

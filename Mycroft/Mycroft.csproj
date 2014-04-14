@@ -57,7 +57,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Logger.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="MessageEventHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
