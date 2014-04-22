@@ -1,16 +1,16 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>$id$</id>
-    <version>$version$</version>
-    <title>$title$</title>
-    <authors>$author$</authors>
-    <owners>$author$</owners>
+    <id>mycroft</id>
+    <version>0.1</version>
+    <title>Mycroft C# Client Library</title>
+    <authors>Society of Software Engineers</authors>
+    <owners>Society of Software Engineers</owners>
     <licenseUrl>https://raw.githubusercontent.com/rit-sse-mycroft/template-csharp/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/rit-sse-mycroft/template-csharp</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>$description$</description>
-    <releaseNotes></releaseNotes>
+    <description>Provides APIs for interacting with a Mycroft core server</description>
+    <releaseNotes>Initial release of the Mycroft package</releaseNotes>
     <copyright>Copyright 2014</copyright>
     <tags>mycroft RIT app-template</tags>
   </metadata>
